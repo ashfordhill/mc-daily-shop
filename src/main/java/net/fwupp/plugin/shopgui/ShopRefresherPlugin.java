@@ -4,7 +4,6 @@ import me.arcaniax.hdb.api.DatabaseLoadEvent;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import net.brcdev.shopgui.ShopGuiPlusApi;
 import net.brcdev.shopgui.event.ShopGUIPlusPostEnableEvent;
-import net.brcdev.shopgui.exception.shop.ShopsNotLoadedException;
 import net.brcdev.shopgui.shop.Shop;
 import net.brcdev.shopgui.shop.item.ShopItem;
 import net.brcdev.shopgui.shop.item.ShopItemType;
@@ -16,7 +15,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 public class ShopRefresherPlugin extends JavaPlugin implements Listener {
@@ -27,14 +25,16 @@ public class ShopRefresherPlugin extends JavaPlugin implements Listener {
     private CountDownLatch headDatabaseLatch = new CountDownLatch(1);
 
     private HeadDatabaseAPI api;
+    private Config config;
+    private int numTimesTimedTaskEntered = 0;
 
     @Override
     public void onEnable() {
         this.getServer().getPluginManager().registerEvents(this, this);
 
+        getLogger().info("Starting refresh shop timer!");
+        config = new Config(getConfig());
         startTimer();
-
-
     }
 
     private void startTimer() {
@@ -43,30 +43,51 @@ public class ShopRefresherPlugin extends JavaPlugin implements Listener {
             public void run() {
 
                 try {
+                    getLogger().info("Awaiting ShopGui and HeadDatabase to load..");
+
                     // Wait for both APIs to be ready
                     shopGuiLatch.await();
                     headDatabaseLatch.await();
 
-                    // this would eff over any player shops.
-                    Set<Shop> shops = ShopGuiPlusApi.getPlugin().getShopManager().getShops();
-                    shops.forEach(shop -> refreshShop(shop));
-
+                    if(config.isReloadConfigOnRefresh()) {
+                        config = new Config(getConfig());
+                    }
+                    if (numTimesTimedTaskEntered > 0 || config.isRefreshOnStartup()) {
+                        for(int i = 0; i < config.getShopIDsToRefresh().size(); ++i) {
+                            Shop shop = ShopGuiPlusApi.getPlugin().getShopManager().getShopById(
+                                    config.getShopIDsToRefresh().get(i));
+                            refreshShop(shop, i);
+                        }
+                    }
+                    numTimesTimedTaskEntered++;
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                } catch (ShopsNotLoadedException e) {
-                    throw new RuntimeException(e);
                 }
             }
         }.runTaskTimer(this, 0, intervalInMilliseconds);
     }
 
-        int numItems = 10;
-    public void refreshShop(Shop shop) {
-        shop.setSize(numItems); // maybe this 'clears' the shop?
-        shop.setShopItems(getRandomHeadsForShop(numItems, shop));
+    public void refreshShop(Shop shop, int index) {
+        shop.setSize(config.getNumItemsPerShop()); // maybe this 'clears' the shop?
+
+        List<ShopItem> shopItems = new ArrayList<>();
+        int randomHeadsNeeded = config.getNumItemsPerShop();
+
+        // first shop will get the 'forced' items, if applicable
+        if(index == 1 && !config.getHeadIDsToForceInclude().isEmpty()) {
+            randomHeadsNeeded = config.getHeadIDsToForceInclude().size() - config.getNumItemsPerShop();
+            config.getHeadIDsToForceInclude().forEach((headID) -> {
+                ShopItem shopItem = new ShopItem(shop, null, ShopItemType.ITEM, api.getItemHead(headID));
+                shopItems.add(shopItem);
+            });
+        }
+
+        // rest of first shop's items and/or all of the other shops items will be random
+        shopItems.addAll(getRandomHeadsForShop(randomHeadsNeeded, shop));
+        shop.setShopItems(shopItems);
     }
 
-    public List<ShopItem>  getRandomHeadsForShop(int numRandomHeads, Shop shop) {
+    public List<ShopItem> getRandomHeadsForShop(int numRandomHeads, Shop shop) {
         List<ShopItem> shopHeads = new ArrayList<>();
 
         for (int i = 0; i < numRandomHeads; i++) {
@@ -78,7 +99,6 @@ public class ShopRefresherPlugin extends JavaPlugin implements Listener {
         return shopHeads;
     }
 
-    // Need to wait for both of these events to happen first, to avoid NPE/issues
     @EventHandler
     public void onDatabaseLoad(DatabaseLoadEvent e) {
         api = new HeadDatabaseAPI();
