@@ -4,24 +4,4 @@ author: Fwupp
 version: '1.0.0'
 main: net.fwupp.plugin.shopgui.ShopRefresherPlugin
 api-version: '1.19'
-depends: [HeadDatabase, ShopGUIPlus]
-
-# If set to true, will refresh all the shops whenever this plugin is loaded.
-# Otherwise, the next refresh will happen at the next interval, refresh-interval-in-hours
-refresh-on-startup: true
-refresh-interval-in-hours: 12
-
-# When a player creates a shop, it will have a shopID assigned to it.
-shop-ids-to-refresh: []
-
-# The HeadDatabase IDs that will can be forcibly included in the next refresh cycle.
-# Can search for heads and find IDs here: https://minecraft-heads.com/custom-heads
-# Make sure num-items-per-shop >= the number of values included in this array here.
-# Any remaining unspecified heads to stock will be random.
-# If there are multiple shops, they'll only be shoved in the first shop listed
-head-ids-to-force-include: []
-num-items-per-shop: 10
-
-# If set to true, will reload this config file whenever a refresh happens.
-# This means you can change values in this yml here and not have to reload the plugin.
-reload-config-on-refresh: true
+depend: [HeadDatabase, ShopGUIPlus]

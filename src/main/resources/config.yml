@@ -1,0 +1,29 @@
+# If set to true, will refresh all the shops whenever this plugin is loaded.
+# Otherwise, the next refresh will happen at the next interval, refresh-interval-in-hours
+refresh-on-startup: true
+
+# This can be lower than 1, if desiring more frequent refreshes.
+refresh-interval-in-hours: 1
+
+# The name of the shop; this corresponds to heads.yml in the plugins\ShopGUIPlus\shops\ directory
+# As per ShopGUI, has to be a multiple of 9. 54 is the maximum.
+# The name of the villager that will be used to open the shop. Named via name tag. Case-sensitive.
+head-shop-name: "heads"
+head-shop-villager-name: "Crazy Redd"
+# The head to give the villager when naming it the shop name. Leave empty for no assignment.
+head-shop-villager-head-id: "60840"
+num-items-per-shop: 54
+price-per-head: 100
+
+
+# The ore shop exists by default in ShopGUI and can be configured in its ores.yml file
+# This serves as a way for players to get 'money' by selling ores/gems
+ore-shop-name: "ores"
+ore-shop-villager-name: "Tom Nook"
+# The head to give the villager when naming it the ore shop name. Leave empty for no assignment.
+ore-shop-villager-head-id: "49382"
+
+# The HeadDatabase IDs that will be forcibly included in the next refresh cycle.
+# Can search for heads and find IDs here: https://minecraft-heads.com/custom-heads
+# Any remaining unspecified heads to stock will be random.
+head-ids-to-force-include: [ ]
