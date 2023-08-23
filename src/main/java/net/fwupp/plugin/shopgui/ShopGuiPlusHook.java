@@ -70,7 +70,7 @@ public class ShopGuiPlusHook implements Listener {
 
     private boolean openShopIfApplicable(PlayerInteractEntityEvent event) {
         if (event.getRightClicked().getName().equals(config.getHeadShopVillagerName())) {
-            event.getPlayer().performCommand("shop " + config.getShopName());
+            event.getPlayer().performCommand("shop " + config.getHeadShopName());
             return true;
         }
         else if(event.getRightClicked().getName().equals(config.getOreShopVillagerName())) {

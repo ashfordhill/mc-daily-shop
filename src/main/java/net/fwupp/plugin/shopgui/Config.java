@@ -1,7 +1,6 @@
 package net.fwupp.plugin.shopgui;
 
 import lombok.Data;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.List;
@@ -9,7 +8,7 @@ import java.util.logging.Logger;
 
 @Data
 public class Config {
-    private String shopName;
+    private String headShopName;
     private List<String> headIDsToForceInclude;
     private double refreshIntervalInHours;
     private int numItemsInShop;
@@ -24,7 +23,7 @@ public class Config {
 
 
     public Config(FileConfiguration config, Logger logger) {
-        shopName = config.getString("shop-name");
+        headShopName = config.getString("head-shop-name");
         headIDsToForceInclude = config.getStringList("head-ids-to-force-include");
         refreshIntervalInHours = config.getDouble("refresh-interval-in-hours");
         numItemsInShop = config.getInt("num-items-per-shop");
@@ -38,7 +37,7 @@ public class Config {
         oreShopName = config.getString("ore-shop-name");
         logger.info("Config loaded! Printing values..");
         logger.info(String.format(
-                "\nshop-name: %s\n" +
+                "\nhead-shop-name: %s\n" +
                 "head-ids-to-force-include: %s\n" +
                 "price-per-head: %s\n" +
                 "refresh-interval-in-hours: %s\n" +
@@ -49,7 +48,7 @@ public class Config {
                 "ore-shop-villager-name: %s\n" +
                 "ore-shop-villager-head-id: %s\n" +
                 "ore-shop-name: %s\n",
-                shopName.toString(),
+                headShopName.toString(),
                 headIDsToForceInclude.toString(),
                 pricePerHead,
                 refreshIntervalInHours,

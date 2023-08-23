@@ -30,9 +30,9 @@ public class ShopRefresherRunnable extends BukkitRunnable {
     public void run() {
         // only refresh upon startup if the config says to, otherwise next refresh will be at the next interval
         if (numTimesTimedTaskEntered > 0 || config.isRefreshOnStartup()) {
-            Shop shop = ShopGuiPlusApi.getPlugin().getShopManager().getShopById(config.getShopName());
+            Shop shop = ShopGuiPlusApi.getPlugin().getShopManager().getShopById(config.getHeadShopName());
             refreshShop(shop);
-            logger.info(String.format("Refreshed %s shop inventory with %s heads!", config.getShopName(), config.getNumItemsInShop()));
+            logger.info(String.format("Refreshed %s shop inventory with %s heads!", config.getHeadShopName(), config.getNumItemsInShop()));
         }
         numTimesTimedTaskEntered++;
     }
@@ -42,20 +42,20 @@ public class ShopRefresherRunnable extends BukkitRunnable {
         int randomHeadsNeeded = config.getNumItemsInShop();
         // Attempt to load any specific heads before loading random heads
         if(!config.getHeadIDsToForceInclude().isEmpty()) {
-            randomHeadsNeeded = config.getHeadIDsToForceInclude().size() - config.getNumItemsInShop();
+            randomHeadsNeeded =  config.getNumItemsInShop() - config.getHeadIDsToForceInclude().size();
             if(randomHeadsNeeded < 0) {
-                logger.warning(String.format("You have %s heads in your 'head-ids-to-force-include' list, but your 'num-items-per-shop' is set to %s. " +
-                                "This will result in a negative number of random heads to be added to the shop. " +
-                                "Please either increase 'num-items-per-shop' or decrease the number of heads in 'head-ids-to-force-include'.",
-                        config.getHeadIDsToForceInclude().size(), config.getNumItemsInShop()));
-                return;
+                logger.warning(
+                        String.format(
+                        "Number of heads to force include (%s) is greater than the number of items in the shop (%s). Using all random heads instead.",
+                            config.getHeadIDsToForceInclude().size(),
+                            config.getNumItemsInShop()));
             }
             else {
                 shopItems.addAll(getSpecificHeadsForShop(shop));
             }
         }
 
-        // rest of first shop's items and/or all of the other shops items will be random
+        // rest of shop's items will be random
         shopItems.addAll(getRandomHeadsForShop(randomHeadsNeeded, shop));
         shop.setShopItems(shopItems);
         nextShopSlotNum = 0;
