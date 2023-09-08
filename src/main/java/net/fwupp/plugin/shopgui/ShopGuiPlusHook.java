@@ -4,11 +4,14 @@ import lombok.SneakyThrows;
 import me.arcaniax.hdb.api.DatabaseLoadEvent;
 import me.arcaniax.hdb.api.HeadDatabaseAPI;
 import net.brcdev.shopgui.event.ShopGUIPlusPostEnableEvent;
-import net.luckperms.api.event.LuckPermsEvent;
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.LuckPermsProvider;
+import net.luckperms.api.cacheddata.CachedPermissionData;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.model.user.UserManager;
+import net.luckperms.api.node.types.PermissionNode;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.command.CommandException;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
 import org.bukkit.event.EventHandler;
@@ -16,12 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 public class ShopGuiPlusHook implements Listener {
@@ -35,9 +33,6 @@ public class ShopGuiPlusHook implements Listener {
     private ShopRefresherRunnable shopRefresherRunnable;
     private String headShopPermission;
     private String oreShopPermission;
-    private static Set<UUID> headPlayerUUIDs = new HashSet<>(); // players who already have permissions
-
-    private static Set<UUID> orePlayerUUIDs = new HashSet<>(); // players who already have permissions
     public ShopGuiPlusHook(JavaPlugin plugin, Config config) {
         this.plugin = plugin;
         this.config = config;
@@ -87,7 +82,7 @@ public class ShopGuiPlusHook implements Listener {
             return;
         }
 
-        // otherwise, maybe it was some sort of naming event, so give the villager a head, if so.
+        // otherwise, maybe it was some sort of naming event; give the villager a head, if so.
         ItemStack itemInHand = event.getPlayer().getInventory().getItemInMainHand();
         if (itemInHand.getType() == Material.NAME_TAG && itemInHand.hasItemMeta()) {
             giveVillagerHelmetIfApplicable((Villager) event.getRightClicked(), itemInHand);
@@ -97,30 +92,33 @@ public class ShopGuiPlusHook implements Listener {
     private boolean openShopIfApplicable(PlayerInteractEntityEvent event) {
         if (event.getRightClicked().getName().equals(config.getHeadShopVillagerName())) {
             Player player = event.getPlayer();
-            if(!headPlayerUUIDs.contains(player.getUniqueId())) {
-                setPermissionIfNeeded(player, headShopPermission);
-                headPlayerUUIDs.add(player.getUniqueId());
-            }
-            player.performCommand("shop " + config.getHeadShopName());
-            return true;
+            setPermissionIfNeeded(player, headShopPermission);
+            return player.performCommand("shop " + config.getHeadShopName());
         }
         else if(event.getRightClicked().getName().equals(config.getOreShopVillagerName())) {
             Player player = event.getPlayer();
-            if(!orePlayerUUIDs.contains(player.getUniqueId())) {
-                setPermissionIfNeeded(player, oreShopPermission);
-                orePlayerUUIDs.add(player.getUniqueId());
-            }
-            player.performCommand("shop " + config.getOreShopName());
-            return true;
+            setPermissionIfNeeded(player, oreShopPermission);
+            return player.performCommand("shop " + config.getOreShopName());
         }
         return false;
     }
 
     private void setPermissionIfNeeded(Player player, String permissionNode) {
-        plugin.getLogger().info(String.format("Giving %s permissions for shop. Permission: %s..",
-                player.getDisplayName(), permissionNode));
-        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), String.format("lp user %s permission set %s true", player.getDisplayName(), permissionNode));
-        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "lp reload");
+        LuckPerms luckPerms = LuckPermsProvider.get();
+        UserManager userManager = luckPerms.getUserManager();
+        User playerAsLuckPermsUser = luckPerms.getPlayerAdapter(Player.class).getUser(player);
+        CachedPermissionData permissionData = playerAsLuckPermsUser.getCachedData().getPermissionData();
+        boolean hasShopPermission = permissionData.checkPermission(permissionNode).asBoolean();
+        if(!hasShopPermission) {
+            plugin.getLogger().info(String.format("Giving %s permissions for shop. Permission: %s",
+                    player.getDisplayName(), permissionNode));
+
+            playerAsLuckPermsUser.data().add(PermissionNode.builder(permissionNode).value(true).build());
+            userManager.saveUser(playerAsLuckPermsUser);
+        }
+
+//        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), String.format("lp user %s permission set %s true", player.getDisplayName(), permissionNode));
+//        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "lp reload");
 
     }
 
