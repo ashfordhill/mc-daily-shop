@@ -4,4 +4,9 @@ author: Fwupp
 version: '1.0.0'
 main: net.fwupp.plugin.shopgui.ShopRefresherPlugin
 api-version: '1.19'
-depend: [HeadDatabase, ShopGUIPlus]
+depend: [HeadDatabase, ShopGUIPlus, LuckPerms]
+commands:
+  gethead:
+    description: Get a head from the HeadDatabase, puts in off hand. Creative mode only.
+    usage: "Usage: /<command> <headid>"
+    aliases: [gethead]

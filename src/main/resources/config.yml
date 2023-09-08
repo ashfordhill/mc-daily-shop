@@ -6,10 +6,10 @@ refresh-on-startup: true
 refresh-interval-in-hours: 1
 
 # The name of the shop; this corresponds to the .yml in the plugins\ShopGUIPlus\shops\ directory
-# The name of the villager that will be used to open the shop. Named via name tag. Case-sensitive.
 head-shop-name: "heads"
-# The head to give the villager when naming it the shop name. Leave empty for no assignment.
+# The name of the villager that will be used to open the shop. Named via name tag. Case-sensitive.
 head-shop-villager-name: "Crazy Redd"
+# The head to give the villager when naming it the shop name. Leave empty for no assignment.
 head-shop-villager-head-id: "60840"
 # As per ShopGUI, has to be a multiple of 9. 54 is the maximum.
 num-items-per-shop: 54
